@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>J.A.R.V.I.S. Hands-Free AI</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        body {
+            background: radial-gradient(circle at center, #0a192f 0%, #02060d 100%);
+            color: #00f3ff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            height: 100vh;
+            padding: 20px 15px;
+            overflow: hidden;
+        }
+        .header {
+            text-align: center;
+            letter-spacing: 4px;
+            font-size: 1.3rem;
+            font-weight: 700;
+            text-shadow: 0 0 12px #00f3ff;
+            margin-top: 5px;
+        }
+        .sub-header {
+            font-size: 0.75rem;
+            color: #5bc0de;
+            letter-spacing: 2px;
+            margin-top: 4px;
+        }
+
+        /* Jarvis Core Reactor */
+        .core-container {
+            position: relative;
+            width: 230px;
+            height: 230px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            margin: 10px 0;
+        }
+        .ring {
+            position: absolute;
+            border-radius: 50%;
+            border: 3px solid transparent;
+        }
+        .ring1 {
+            width: 220px;
+            height: 220px;
+            border-top: 3px solid #00f3ff;
+            border-bottom: 3px solid #00f3ff;
+            animation: spin 6s linear infinite;
+        }
+        .ring2 {
+            width: 180px;
+            height: 180px;
+            border-left: 3px solid #0077ff;
+            border-right: 3px solid #0077ff;
+            animation: spinReverse 3.5s linear infinite;
+        }
+        .core {
+            width: 130px;
+            height: 130px;
+            border-radius: 50%;
+            background: radial-gradient(circle, #00f3ff 0%, #004466 75%, #001122 100%);
+            box-shadow: 0 0 35px rgba(0, 243, 255, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            font-weight: bold;
+            color: #02060d;
+            font-size: 0.95rem;
+            padding: 10px;
+            transition: all 0.3s ease;
+            user-select: none;
+        }
+
+        /* States */
+        .listening .ring1 { border-top-color: #ff2a6d; border-bottom-color: #ff2a6d; animation-duration: 2s; }
+        .listening .core {
+            background: radial-gradient(circle, #ff2a6d 0%, #7a0026 75%, #22000b 100%);
+            box-shadow: 0 0 50px #ff2a6d;
+            color: #fff;
+            animation: pulse 1.1s infinite;
+        }
+        .thinking .core {
+            background: radial-gradient(circle, #ffbe0b 0%, #805b00 75%, #261b00 100%);
+            box-shadow: 0 0 45px #ffbe0b;
+            color: #000;
+        }
+        .speaking .ring1 { border-top-color: #05ffa1; border-bottom-color: #05ffa1; animation-duration: 1.5s; }
+        .speaking .core {
+            background: radial-gradient(circle, #05ffa1 0%, #006640 75%, #002215 100%);
+            box-shadow: 0 0 50px #05ffa1;
+            color: #000;
+            animation: pulse 0.5s infinite;
+        }
+
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        @keyframes spinReverse { 100% { transform: rotate(-360deg); } }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.09); }
+        }
+
+        .status {
+            font-size: 0.95rem;
+            color: #a8e6ff;
+            text-align: center;
+            min-height: 24px;
+            font-weight: 500;
+        }
+
+        .chat-box {
+            width: 100%;
+            max-width: 500px;
+            height: 210px;
+            background: rgba(0, 243, 255, 0.04);
+            border: 1px solid rgba(0, 243, 255, 0.25);
+            border-radius: 14px;
+            padding: 12px;
+            overflow-y: auto;
+            font-size: 0.9rem;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .msg-user {
+            align-self: flex-end;
+            background: rgba(0, 119, 255, 0.3);
+            border: 1px solid rgba(0, 119, 255, 0.5);
+            padding: 8px 12px;
+            border-radius: 12px 12px 2px 12px;
+            color: #ffffff;
+            max-width: 82%;
+        }
+        .msg-ai {
+            align-self: flex-start;
+            background: rgba(0, 243, 255, 0.12);
+            border: 1px solid rgba(0, 243, 255, 0.3);
+            padding: 8px 12px;
+            border-radius: 12px 12px 12px 2px;
+            color: #00f3ff;
+            max-width: 82%;
+        }
+
+        .controls {
+            display: flex;
+            gap: 8px;
+            width: 100%;
+            max-width: 500px;
+        }
+        input {
+            flex: 1;
+            background: rgba(0, 243, 255, 0.08);
+            border: 1px solid rgba(0, 243, 255, 0.5);
+            border-radius: 10px;
+            padding: 11px;
+            color: white;
+            font-size: 0.95rem;
+            outline: none;
+        }
+        button {
+            background: #00f3ff;
+            color: #02060d;
+            border: none;
+            border-radius: 10px;
+            padding: 0 16px;
+            font-weight: bold;
+            font-size: 0.9rem;
+            cursor: pointer;
+        }
+        button.stop-btn {
+            background: #ff2a6d;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+
+    <div>
+        <div class="header">J.A.R.V.I.S.</div>
+        <div class="sub-header">HANDS-FREE VOICE PROTOCOL</div>
+    </div>
+
+    <div class="core-container" id="coreBtn" onclick="startConversation()">
+        <div class="ring ring1"></div>
+        <div class="ring ring2"></div>
+        <div class="core" id="coreText">START<br>VOICE</div>
+    </div>
+
+    <div class="status" id="statusText">एक बार गोले पर टच करें, फिर लगातार बात करें।</div>
+
+    <div class="chat-box" id="chatBox"></div>
+
+    <div class="controls">
+        <input type="text" id="textInput" placeholder="लिखकर भेजें..." onkeypress="if(event.key==='Enter') sendText()">
+        <button onclick="sendText()">Send</button>
+        <button class="stop-btn" onclick="stopConversation()">STOP</button>
+    </div>
+
+    <script>
+        // ================= CONFIGURATION =================
+        const ABLIT_KEY = "ak_2_J8DdlQ3sxyqXLdz-waU2YZmnoggYwh0iPhY0amZQk";
+        const API_URL   = "https://api.abliteration.ai/v1/chat/completions";
+        const MODEL     = "abliterated-model-large-flash";
+
+        const SYSTEM_PROMPT = `तू जार्विस (J.A.R.V.I.S.) है — अमित का स्मार्ट पर्सनल वॉइस असिस्टेंट।
+नियम:
+- सीधे और छोटे जवाब दे (1 से 3 लाइन), ताकि आवाज़ में सुनने में असली लगे।
+- कोई भी सिंबल (*, #, _, \`) बिल्कुल मत लिख, सिर्फ साफ बोलने लायक वाक्य लिख।
+- भाषा वही रख जो यूजर बोले (हिंदी/हिंग्लिश/इंग्लिश), दोस्त जैसा स्मार्ट और आत्मविश्वास भरा लहजा।`;
+
+        // ================= STATE VARIABLES =================
+        let history = [];
+        let autoLoopActive = false;  // लगातार बात चालू रखने का फ्लैग
+        let isListening = false;
+        let isProcessing = false;
+        let isSpeaking = false;
+        let recognition = null;
+        const synth = window.speechSynthesis;
+
+        const coreBtn    = document.getElementById("coreBtn");
+        const coreText   = document.getElementById("coreText");
+        const statusText = document.getElementById("statusText");
+        const chatBox    = document.getElementById("chatBox");
+
+        // ================= 1. SPEECH RECOGNITION =================
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+        if (SpeechRecognition) {
+            recognition = new SpeechRecognition();
+            recognition.lang = "hi-IN";
+            recognition.interimResults = false;
+            recognition.continuous = false;
+
+            recognition.onstart = () => {
+                isListening = true;
+                setUI("listening", "LISTENING...", "सुन रहा हूँ अमित, बोलिए...");
+            };
+
+            recognition.onresult = (event) => {
+                isListening = false;
+                const transcript = event.results[0][0].transcript.trim();
+                if (transcript) {
+                    addMessage(transcript, "user");
+                    askJarvis(transcript);
+                } else if (autoLoopActive) {
+                    listenNext();
+                }
+            };
+
+            recognition.onerror = (event) => {
+                isListening = false;
+                // अगर यूजर चुप रहा (no-speech) और लूप चालू है, तो फिर से सुनना शुरू करें
+                if (autoLoopActive && !isProcessing && !isSpeaking) {
+                    if (event.error === "no-speech" || event.error === "aborted") {
+                        setTimeout(listenNext, 400);
+                    } else if (event.error === "not-allowed") {
+                        autoLoopActive = false;
+                        setUI("", "MIC BLOCKED", "माइक की परमिशन नहीं मिली। सेटिंग्स से Allow करें।");
+                    } else {
+                        setTimeout(listenNext, 800);
+                    }
+                }
+            };
+
+            recognition.onend = () => {
+                isListening = false;
+                // अगर कुछ सुना नहीं गया और प्रोसेसिंग भी नहीं चल रही, तो ऑटो-रीस्टार्ट करें
+                if (autoLoopActive && !isProcessing && !isSpeaking) {
+                    setTimeout(listenNext, 350);
+                }
+            };
+        } else {
+            statusText.innerText = "Error: इस ब्राउज़र/WebView में Voice Recognition सपोर्ट नहीं है।";
+        }
+
+        function startConversation() {
+            if (autoLoopActive) return; // पहले से चालू है
+            autoLoopActive = true;
+            // मोबाइल ब्राउज़र का ऑडियो अनलॉक करने के लिए खाली साउंड ट्रिगर
+            if (synth) synth.cancel();
+            listenNext();
+        }
+
+        function listenNext() {
+            if (!autoLoopActive || !recognition || isListening || isProcessing || isSpeaking) return;
+            try {
+                recognition.start();
+            } catch (e) {
+                setTimeout(listenNext, 500);
+            }
+        }
+
+        function stopConversation() {
+            autoLoopActive = false;
+            isListening = false;
+            isProcessing = false;
+            isSpeaking = false;
+            if (recognition) {
+                try { recognition.abort(); } catch (e) {}
+            }
+            if (synth) synth.cancel();
+            if (window.AndroidTTS && typeof window.AndroidTTS.stop === "function") {
+                window.AndroidTTS.stop();
+            }
+            setUI("", "START<br>VOICE", "बातचीत रोक दी गई है। फिर शुरू करने के लिए टच करें।");
+        }
+
+        // ================= 2. AI BRAIN (ABLITERATION API) =================
+        async function askJarvis(userText) {
+            isProcessing = true;
+            setUI("thinking", "THINKING...", "सोच रहा हूँ...");
+
+            history.push({ role: "user", content: userText });
+            if (history.length > 10) history.shift();
+
+            try {
+                const res = await fetch(API_URL, {
+                    method: "POST",
+                    headers: {
+                        "Authorization": `Bearer ${ABLIT_KEY}`,
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        model: MODEL,
+                        messages: [{ role: "system", content: SYSTEM_PROMPT }, ...history],
+                        temperature: 0.7
+                    })
+                });
+
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error?.message || "API Error");
+
+                let reply = data.choices[0].message.content.trim();
+                let cleanSpeech = reply.replace(/[*#_`~]/g, "");
+
+                history.push({ role: "assistant", content: reply });
+                addMessage(reply, "ai");
+
+                isProcessing = false;
+                speakJarvis(cleanSpeech);
+
+            } catch (err) {
+                isProcessing = false;
+                statusText.innerText = "नेटवर्क/API एरर: " + err.message;
+                if (autoLoopActive) {
+                    setTimeout(listenNext, 2000);
+                } else {
+                    setUI("", "START<br>VOICE", "एरर आया, दोबारा टच करें।");
+                }
+            }
+        }
+
+        // ================= 3. JARVIS TTS (SPEAKING) =================
+        function speakJarvis(text) {
+            isSpeaking = true;
+            setUI("speaking", "SPEAKING", "जार्विस बोल रहा है...");
+
+            // Option A: यदि Android App में Kokoro MediaPipe TTS जुड़ा है
+            if (window.AndroidTTS && typeof window.AndroidTTS.speak === "function") {
+                window.AndroidTTS.speak(text);
+                // Android साइड से बोलना खत्म होने पर window.onAndroidSpeechDone() कॉल होगा
+                return;
+            }
+
+            // Option B: WebView / Browser Built-in TTS
+            synth.cancel();
+            const utter = new SpeechSynthesisUtterance(text);
+            const voices = synth.getVoices();
+
+            const maleVoice = voices.find(v =>
+                v.lang.includes("hi") && (v.name.includes("Male") || v.name.includes("Madhur") || v.name.includes("Hemant"))
+            ) || voices.find(v => v.lang.includes("hi"));
+
+            if (maleVoice) utter.voice = maleVoice;
+            utter.lang = "hi-IN";
+            utter.pitch = 0.85; // Jarvis जैसी भारी आवाज़
+            utter.rate = 1.05;  // तेज़ और नेचुरल फ्लो
+
+            utter.onend = () => {
+                isSpeaking = false;
+                if (autoLoopActive) {
+                    listenNext(); // बोलते ही तुरंत माइक फिर चालू!
+                } else {
+                    setUI("", "START<br>VOICE", "तैयार।");
+                }
+            };
+
+            utter.onerror = () => {
+                isSpeaking = false;
+                if (autoLoopActive) listenNext();
+            };
+
+            synth.speak(utter);
+        }
+
+        // Android Kokoro TTS से कॉल होने वाला फंक्शन जब बोलना पूरा हो जाए
+        window.onAndroidSpeechDone = function() {
+            isSpeaking = false;
+            if (autoLoopActive) listenNext();
+        };
+
+        // ================= HELPERS =================
+        function sendText() {
+            const input = document.getElementById("textInput");
+            const val = input.value.trim();
+            if (!val) return;
+            input.value = "";
+            if (recognition && isListening) {
+                try { recognition.abort(); } catch (e) {}
+            }
+            addMessage(val, "user");
+            askJarvis(val);
+        }
+
+        function setUI(stateClass, coreLabel, statusMsg) {
+            coreBtn.className = "core-container " + stateClass;
+            coreText.innerHTML = coreLabel;
+            statusText.innerText = statusMsg;
+        }
+
+        function addMessage(text, sender) {
+            const div = document.createElement("div");
+            div.className = sender === "user" ? "msg-user" : "msg-ai";
+            div.innerText = text;
+            chatBox.appendChild(div);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        window.speechSynthesis.onvoiceschanged = () => synth.getVoices();
+    </script>
+</body>
+          </html>
+          
